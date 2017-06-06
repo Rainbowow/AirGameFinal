@@ -1,7 +1,9 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <time.h>
 #include <list>
-#include <windows.h>
+#include<iostream>
+
 using namespace sf;
 const int H=1080;
 const int W=1920;
@@ -30,6 +32,7 @@ void draw(RenderWindow &window)
 
 virtual ~Entity(){};
 };
+
 class enemyflight: public Entity{
     public:
         enemyflight(){name="enemyflight";}
@@ -44,6 +47,12 @@ class bullet:public Entity{
 
     void update(){x+=10;}
 };
+
+bool isCollide(Entity *a,Entity *b){
+    return (b->x - a->x)*(b->x - a->x)+
+         (b->y - a->y)*(b->y - a->y)<
+         (a->R + b->R)*(a->R + b->R);
+}
 int main(){
     srand(time(0));
 //////////window///////////
@@ -58,20 +67,15 @@ int main(){
     player.loadFromFile("jzm.jpg");
     Sprite mPlayer(player);
     mPlayer.setPosition(0,500);
-///////////////
+/////////////backgroundmusic////////////
+    Music music;
+    music.openFromFile("backgroundmusic.ogg");
+    music.play();
+    music.setLoop(true);
+///////////////linklist////////////
 std::list<Entity*> entities;
-///////////////
-/////////enemyflight////////
-    Texture enemy;
-    for(int i=0;i<=500;i++){
-        int randomflighty=rand()%1080;
-        int randomflightx=rand()%(30000-1900)+1900;
-        enemy.loadFromFile("enemy.png");
-        enemyflight *e= new enemyflight();
-        e->settings(enemy,randomflightx,randomflighty,1);
-        entities.push_back(e);
-    }
-/////////bullet///////////
+///////////////////
+    int scores=0;
 
 ////////mainloop//////////
     while(window.isOpen()){
@@ -81,24 +85,49 @@ std::list<Entity*> entities;
             if(event.type==Event::Closed)
                window.close();
             }
+
+///////////////////enemy/////////////////
+    Texture enemy;
+    int randomflighty=rand()%1080;
+    int randomflightx=rand()%(30000-1900)+1900;
+    enemy.loadFromFile("enemy.png");
+    enemyflight *e= new enemyflight();
+    e->settings(enemy,randomflightx,randomflighty,100);
+    entities.push_back(e);
+
 ////////bulletcontrol///////
-        if (Keyboard::isKeyPressed(Keyboard::Space)){
-            Texture mbullet;
-            mbullet.loadFromFile("bullet.png");
-            bullet *b = new bullet();
-            b->settings(mbullet,(int)pos.x+81,(int)pos.y+40);
-            entities.push_back(b);}
+    if (Keyboard::isKeyPressed(Keyboard::Space)){
+        Texture mbullet;
+        mbullet.loadFromFile("bullet.png");
+        bullet *b = new bullet();
+        b->settings(mbullet,(int)pos.x+81,(int)pos.y+40);
+        entities.push_back(b);}
 
-
-
+/////////collide/////////
+    for(auto a:entities)
+        for(auto b:entities){
+            if(a->name=="enemyflight"&&b->name=="bullet")
+            if(isCollide(a,b)){
+                scores+=10;
+                a->life=false;
+                b->life=false;
+            }
+            if(a->name=="enemyflight")
+            if(a->x<0){
+                a->life=false;
+            }
+            if(a->name=="bullet")
+            if(a->x>1920){
+                a->life=false;
+            }
+    }
 //////////player move/////
-
         if (Keyboard::isKeyPressed(Keyboard::Right)&&pos.x<=1840) mPlayer.move(5,0);
         if (Keyboard::isKeyPressed(Keyboard::Left)&&pos.x>=0) mPlayer.move(-5,0);
         if (Keyboard::isKeyPressed(Keyboard::Up)&&pos.y>=0) mPlayer.move(0,-5);
         if (Keyboard::isKeyPressed(Keyboard::Down)&&pos.y<=1000) mPlayer.move(0,5);
-
-////////////////////
+////////////////////////
+////////////////////through////////////
     for(auto i=entities.begin();i!=entities.end();){
     Entity *e=*i;
     e->update();
