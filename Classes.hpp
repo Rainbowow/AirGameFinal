@@ -84,8 +84,9 @@ class Game{
 
             srand(time(0));
 
-            RenderWindow window(VideoMode(600,1080),"AirGameFinal");
+            RenderWindow window(VideoMode(800,1080),"AirGameFinal");
             window.setFramerateLimit(60);
+
             Texture Background,Player;
             Player.loadFromFile("player.png");
 
@@ -98,6 +99,8 @@ class Game{
             Texture enemy;
             enemy.loadFromFile("enemy.png");
 
+            Texture explosion;
+            explosion.loadFromFile("explosion.png");
 
             Music music;
             music.openFromFile("backgroundmusic.ogg");
@@ -109,8 +112,9 @@ class Game{
             std::deque<Entity*> entities;
 
             player *p = new player();
-            p->settings(Player,260,900,1);
+            p->settings(Player,260,900,100);
             entities.push_back(p);
+
 
                 while(window.isOpen()){
                     Event event;
@@ -120,24 +124,29 @@ class Game{
                         if (event.type == Event::KeyPressed)
                         if (event.key.code == Keyboard::Space){
                             bullet *b = new bullet();
+                            b->sprite.setOrigin(15,25);
                             b->settings(mbullet,p->x+40,p->y,1);
                             entities.push_back(b);
                         }
                     }
 
+
                     float playerSpeed=10;
-                    if (Keyboard::isKeyPressed(Keyboard::Down)&&p->y<=1080){p->y+=playerSpeed;}
-                    if (Keyboard::isKeyPressed(Keyboard::Up)&&p->y>=100){p->y-=playerSpeed;}
+                    if (Keyboard::isKeyPressed(Keyboard::Down)&&p->y<=900){p->y+=playerSpeed;}
+                    if (Keyboard::isKeyPressed(Keyboard::Up)&&p->y>=0){p->y-=playerSpeed;}
                     if (Keyboard::isKeyPressed(Keyboard::Left)&&p->x>=0){p->x-=playerSpeed;}
                     if (Keyboard::isKeyPressed(Keyboard::Right)&&p->x<=500){p->x+=playerSpeed;}
 
 
-                    int randomflighty=rand()%(0+500)-500;
-                    int randomflightx=rand()%600;
-                    enemyflight *e= new enemyflight();
-                    e->settings(enemy,randomflightx,randomflighty,1);
-                    entities.push_back(e);
+                    int randomflighty=rand()%(0+1000)-1000;
+                    int randomflightx=rand()%400;
 
+                    if(clock()%100==0){
+                    enemyflight *e= new enemyflight();
+                    e->sprite.setOrigin(100,100);
+                    e->settings(enemy,randomflightx,randomflighty,70);
+                    entities.push_back(e);
+                    }
 
 
                     for(auto a:entities)
@@ -146,7 +155,14 @@ class Game{
                         if(isCollide(a,b)){
                             a->life=false;
                             b->life=false;
+
+                            Entity *e = new Entity();
+                            e->settings(explosion,a->x,a->y,1);
+                            e->name="explosion";
+                            entities.push_back(e);
                         }
+
+
                     }
 
                     for(auto i=entities.begin();i!=entities.end();){
@@ -158,9 +174,15 @@ class Game{
 
                     window.clear();
                     window.draw(mBackground);
-                    for(auto i:entities) i->draw(window);
+                    for(auto i:entities){
+                        i->draw(window);
+                        if(i->name=="explosion"){
+                            i->life=false;
+                        }
+                    }
                     window.display();
                 }
+
         }
 
 };
