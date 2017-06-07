@@ -4,7 +4,15 @@
 #include <list>
 #include <iostream>
 #include <deque>
+#include <windows.h>
 using namespace sf;
+
+void musicplay(Music &t,std::string musicname,bool isLoop){
+
+        t.openFromFile(musicname);
+        t.play();
+        t.setLoop(isLoop);
+}
 
 class Entity{
     public:
@@ -102,11 +110,10 @@ class Game{
             Texture explosion;
             explosion.loadFromFile("explosion.png");
 
-            Music music;
-            music.openFromFile("backgroundmusic.ogg");
-            music.play();
-            music.setLoop(true);
 
+            Music backgroundmusic;
+            Music explosionsound;
+            musicplay(backgroundmusic,"backgroundmusic.ogg",true);
 
 
             std::deque<Entity*> entities;
@@ -155,6 +162,8 @@ class Game{
                         if(isCollide(a,b)){
                             a->life=false;
                             b->life=false;
+
+                            musicplay(explosionsound,"explosionsound.ogg",false);
 
                             Entity *e = new Entity();
                             e->settings(explosion,a->x,a->y,1);
