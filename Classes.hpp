@@ -92,6 +92,8 @@ class Game{
 
             srand(time(0));
 
+            int scores=0;
+
             RenderWindow window(VideoMode(800,1080),"AirGameFinal");
             window.setFramerateLimit(60);
 
@@ -110,10 +112,21 @@ class Game{
             Texture explosion;
             explosion.loadFromFile("explosion.png");
 
+            Font font;
+            font.loadFromFile("pixelmix.ttf");
+            Text text;
+            text.setFont(font);
+            text.setPosition(600,0);
+            text.setString("Scores");
+            Text text1;
+            text1.setFont(font);
+            text1.setPosition(750,0);
+
 
             Music backgroundmusic;
             Music explosionsound;
             musicplay(backgroundmusic,"backgroundmusic.ogg",true);
+
 
 
             std::deque<Entity*> entities;
@@ -162,7 +175,7 @@ class Game{
                         if(isCollide(a,b)){
                             a->life=false;
                             b->life=false;
-
+                            scores+=10;
                             musicplay(explosionsound,"explosionsound.ogg",false);
 
                             Entity *e = new Entity();
@@ -173,6 +186,8 @@ class Game{
 
 
                     }
+
+                            text1.setString(std::to_string(scores));
 
                     for(auto i=entities.begin();i!=entities.end();){
                         Entity *e=*i;
@@ -189,6 +204,8 @@ class Game{
                             i->life=false;
                         }
                     }
+                    window.draw(text);
+                    window.draw(text1);
                     window.display();
                 }
 
