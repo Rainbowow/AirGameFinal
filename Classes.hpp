@@ -6,7 +6,9 @@
 #include <deque>
 #include <windows.h>
 using namespace sf;
-
+int scores=0;
+float playerSpeed=10;
+int EnemySpeed=2;
 void musicplay(Music &t,std::string musicname,bool isLoop){
 
         t.openFromFile(musicname);
@@ -21,7 +23,7 @@ class Entity{
         std::string name;
         Sprite sprite;
         Entity(){life=1;}
-
+        int deadcount=0;
         void settings(Texture &t,int X,int Y,int radius=1){
             sprite.setTexture(t);
             x=X;
@@ -44,7 +46,7 @@ class enemyflight: public Entity{
         enemyflight(){name="enemyflight";}
 
         void update(){
-            y+=2;
+            y+=EnemySpeed;
             if(y>1080){
                 life=false;
             }
@@ -67,14 +69,24 @@ class bullet:public Entity{
     }
 };
 
+class ebullet:public Entity{
+    public:
+    ebullet(){name="ebullet";}
 
+    void update(){
+        y+=5;
+        /////sidemanage/////
+        if(y>1080){
+            life=false;
+        }
+    }
+};
 
 class player:public Entity{
     public:
     player(){name="player";}
 
 
-    int deadcount;
 
     void update(){
 
@@ -92,10 +104,14 @@ class Game{
 
             srand(time(0));
 
-            int scores=0;
 
             RenderWindow window(VideoMode(800,1080),"AirGameFinal");
             window.setFramerateLimit(60);
+            Texture gameover;
+            gameover.loadFromFile("gameover.jpg");
+
+            Texture eBullet;
+            eBullet.loadFromFile("ebullet.png");
 
             Texture Background,Player;
             Player.loadFromFile("player.png");
@@ -122,6 +138,7 @@ class Game{
             text1.setFont(font);
             text1.setPosition(750,0);
 
+            Sprite Gameover(gameover);
 
             Music backgroundmusic;
             Music explosionsound;
@@ -132,7 +149,8 @@ class Game{
             std::deque<Entity*> entities;
 
             player *p = new player();
-            p->settings(Player,260,900,100);
+            p->sprite.setOrigin(42,45);
+            p->settings(Player,260,900,45);
             entities.push_back(p);
 
 
@@ -145,28 +163,32 @@ class Game{
                         if (event.key.code == Keyboard::Space){
                             bullet *b = new bullet();
                             b->sprite.setOrigin(15,25);
-                            b->settings(mbullet,p->x+40,p->y,1);
+                            b->settings(mbullet,p->x+40,p->y,25);
                             entities.push_back(b);
                         }
                     }
 
 
-                    float playerSpeed=10;
+
                     if (Keyboard::isKeyPressed(Keyboard::Down)&&p->y<=900){p->y+=playerSpeed;}
                     if (Keyboard::isKeyPressed(Keyboard::Up)&&p->y>=0){p->y-=playerSpeed;}
                     if (Keyboard::isKeyPressed(Keyboard::Left)&&p->x>=0){p->x-=playerSpeed;}
                     if (Keyboard::isKeyPressed(Keyboard::Right)&&p->x<=500){p->x+=playerSpeed;}
 
 
-                    int randomflighty=rand()%(0+1000)-1000;
+                    int randomflighty=rand()%(0+100)-100;
                     int randomflightx=rand()%400;
 
                     if(clock()%100==0){
                     enemyflight *e= new enemyflight();
                     e->sprite.setOrigin(100,100);
-                    e->settings(enemy,randomflightx,randomflighty,70);
+                    e->settings(enemy,randomflightx,randomflighty,100);
                     entities.push_back(e);
+                    ebullet *a = new ebullet();
+                    a->settings(eBullet,e->x,e->y,10);
+                    entities.push_back(a);
                     }
+
 
 
                     for(auto a:entities)
@@ -176,18 +198,32 @@ class Game{
                             a->life=false;
                             b->life=false;
                             scores+=10;
+
                             musicplay(explosionsound,"explosionsound.ogg",false);
 
                             Entity *e = new Entity();
-                            e->settings(explosion,a->x,a->y,1);
+                            e->settings(explosion,a->x-50,a->y,1);
                             e->name="explosion";
                             entities.push_back(e);
                         }
+                        if(a->name=="ebullet"&&b->name=="player")
+                        if(isCollide(a,b)){
+                            a->life=0;
+                            b->deadcount+=1;
+                            if(b->deadcount<2){
+                                b->deadcount+=1;
+                            }
+                            if(b->deadcount>3){
+                                goto gameover;
+                            }
 
-
+                        }
+                        if(scores>100){
+                            EnemySpeed+=2;
+                        }
                     }
 
-                            text1.setString(std::to_string(scores));
+                    text1.setString(std::to_string(scores));
 
                     for(auto i=entities.begin();i!=entities.end();){
                         Entity *e=*i;
@@ -208,7 +244,8 @@ class Game{
                     window.draw(text1);
                     window.display();
                 }
-
+            gameover:
+                window.draw(Gameover);
         }
 
 };
