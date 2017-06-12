@@ -1,6 +1,7 @@
 #include "Classes.hpp"
 
 using namespace sf;
+
 int main(){
 
     beginwindow();
